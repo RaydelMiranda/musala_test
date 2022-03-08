@@ -29,6 +29,7 @@ class TestDrone:
 
         with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
             result = drones.find_one({"_id": drone_id})
+            result.pop('_id')
 
         assert drone == Drone(**result)
 
