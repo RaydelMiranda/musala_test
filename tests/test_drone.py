@@ -1,8 +1,7 @@
 import base64
-import os
 
 import pytest
-from model.db import DRONES_COLLECTION_NAME
+
 from model.drone import *
 
 

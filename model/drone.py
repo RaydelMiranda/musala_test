@@ -100,7 +100,7 @@ class DroneController:
         """
 
         if drone.total_weight + med.weight > drone.max_weight:
-            raise DroneOverweight
+            raise DroneOverweight(f"Maximum wight exceeded, could not add {med.name} with weight: {med.weight}.")
 
         drone.meds.append(med)
 
@@ -156,3 +156,7 @@ class DroneController:
             result = drones.aggregate(pipeline)
         return [(obj['serial'], obj['capacity']) for obj in result]
 
+    @staticmethod
+    def get_drone_list():
+        with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
+            return [drone for drone in drones.find({})]
