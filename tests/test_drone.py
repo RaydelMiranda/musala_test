@@ -1,5 +1,7 @@
+import base64
+import os
+
 import pytest
-import dataclasses
 from model.db import DRONES_COLLECTION_NAME
 from model.drone import *
 
@@ -43,4 +45,27 @@ class TestDrone:
             # Should not allow to dup serial numbers.
             DroneController.register(drone_1)
 
+    def test_load_the_drone(self, drone):
 
+        drone_id = DroneController.register(drone)
+
+        med = Medication("C Vitamin", 500, 'VC', base64.b64encode("example".encode()))
+        DroneController.load_drone(drone, med)
+
+        # Get the drone from the db and check is correctly loaded.
+        with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
+            d = drones.find_one({'_id': drone_id})
+            d.pop('_id')
+            d.update(
+                {'meds': [Medication(**m) for m in d['meds']]}
+            )
+
+            loaded_drone = Drone(**d)
+
+            assert loaded_drone.meds
+            assert loaded_drone.total_weight() == 500
+            assert loaded_drone.meds[0].name == "C Vitamin"
+
+        # Trying to add more to this same drone should fail.
+        with pytest.raises(DroneOverweight):
+            DroneController.load_drone(loaded_drone, med)

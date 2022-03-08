@@ -21,3 +21,9 @@ def db_clean(env_setup):
     client = pymongo.MongoClient(os.environ.get('MONGO_URL', 'localhost:27017'))
     client.drop_database(os.environ['DB_NAME'])
 
+
+@pytest.fixture
+def drone():
+    from model.drone import Drone, DRONE_MODEL_LIGHT, STATE_IDLE, STATE_LOADED
+    drone = Drone(DRONE_MODEL_LIGHT, '1234', 500, 50, STATE_IDLE | STATE_LOADED)
+    yield drone
