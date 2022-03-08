@@ -3,6 +3,8 @@ import os
 import pymongo
 import pytest
 
+from app import create_app
+
 
 @pytest.fixture(autouse=True, scope='function')
 def env_setup(monkeypatch):
@@ -27,3 +29,17 @@ def drone():
     from model.drone import Drone, DRONE_MODEL_LIGHT, STATE_IDLE, STATE_LOADED
     drone = Drone(DRONE_MODEL_LIGHT, '1234', 500, 50, STATE_IDLE | STATE_LOADED)
     yield drone
+
+
+@pytest.fixture()
+def app():
+    app = create_app()
+    app.config.update({
+        "TESTING": True,
+    })
+    yield app
+
+
+@pytest.fixture()
+def client(app):
+    return app.test_client()
