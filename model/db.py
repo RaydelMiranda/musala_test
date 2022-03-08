@@ -9,7 +9,7 @@ DRONES_COLLECTION_NAME = 'drones'
 drone_validation = {
     '$jsonSchema': {
         'bsonType': 'object',
-        'required': ['model', 'serial', 'weight', 'state', 'battery'],
+        'required': ['model', 'serial', 'max_weight', 'state', 'battery'],
         'properties': {
             'model': {
                 'bsonType': 'int',
@@ -22,7 +22,7 @@ drone_validation = {
                 'maxLength': 100,
                 'description': "A string with no more than 100 characters, required."
             },
-            'weight': {
+            'max_weight': {
                 'bsonType': 'int',
                 'minimum': 0,
                 'maximum': 500,
@@ -32,6 +32,10 @@ drone_validation = {
                 'bsonType': 'int',
                 'minimum': 0,
                 'description': "A required integer representing the drone state."
+            },
+            'total_weight': {
+                'bsonType': 'int',
+                'description': "Total weight"
             },
             'battery': {
                 'bsonType': 'int',

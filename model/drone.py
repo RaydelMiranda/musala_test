@@ -39,6 +39,10 @@ class DroneError(Exception):
     pass
 
 
+class DroneNotFound(DroneError):
+    pass
+
+
 class DroneOverweight(DroneError):
     pass
 
@@ -47,24 +51,15 @@ class DroneOverweight(DroneError):
 class Drone:
     model: int
     serial: str
-    weight: int
+    max_weight: int
     battery: int = 0
     state: int = STATE_IDLE
+    total_weight: int = 0
     _id: any = field(init=False)
     meds: List[Medication] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         self._id = self.serial
-
-    def total_weight(self) -> int:
-        if self.meds:
-            total = reduce(
-                lambda x, y: x + y,
-                [med.weight for med in self.meds]
-            )
-        else:
-            total = 0
-        return total
 
 
 class DroneController:
@@ -81,25 +76,83 @@ class DroneController:
                 return post_id
 
     @staticmethod
+    def get_drone(serial: str) -> Drone:
+        with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
+            result = drones.find_one({'serial': serial})
+
+            if not result:
+                raise DroneNotFound(f"Drone with serial {serial} not found.")
+
+            result.pop('_id')
+            result.update(
+                {'meds': [Medication(**m) for m in result['meds']]}
+            )
+
+            drone = Drone(**result)
+
+        return drone
+
+    @staticmethod
     def load_drone(drone: Drone, med: Medication) -> int:
         """
         Load a drone with provided medication and return the total weight,
         raise DroneOverweight exception if weight limit is violated.
         """
 
-        if drone.total_weight() + med.weight > drone.weight:
+        if drone.total_weight + med.weight > drone.max_weight:
             raise DroneOverweight
 
         drone.meds.append(med)
 
         with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
             try:
-                drones.update_one({'serial': drone.serial}, {'$push': {'meds': asdict(med)}}, True)
+                drones.update_one(
+                    {'serial': drone.serial},
+                    {
+                        '$push': {'meds': asdict(med)},
+                        '$inc': {'total_weight': med.weight}
+                    },
+                    True
+                )
             except Exception as err:
                 musala_logger.error(err)
 
             drone.meds.append(med)
-        return drone.total_weight()
+        return drone.total_weight
 
+    @staticmethod
+    def drones_for_loading(med: Medication = None) -> (str, int):
+        """
+        Check available drones for loading
+        :param med: If provided returns only those drones capable of load this specific med.
 
+        :returns: A list of 2-tuples with the format (serial no., capacity)
+        """
+
+        pipeline = [
+            {
+                "$match": {
+                    "$expr": {'$lt': ["$total_weight", "$max_weight"]}
+                }
+            },
+            {
+                "$addFields": {
+                    "after": {'$add': ["$total_weight", 0 if med is None else med.weight]}
+                }
+            },
+            {
+                "$match": {
+                    "$expr": {'$lte': ["$after", "$max_weight"]}
+                }
+            },
+            {
+                "$addFields": {
+                    "capacity": {"$subtract": ["$max_weight", "$after"]}
+                }
+            }
+        ]
+
+        with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
+            result = drones.aggregate(pipeline)
+        return [(obj['serial'], obj['capacity']) for obj in result]
 

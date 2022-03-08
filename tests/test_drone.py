@@ -26,7 +26,11 @@ class TestDrone:
             DroneController.register(drone)
 
     def test_drone_registration(self):
-        drone = Drone(DRONE_MODEL_LIGHT, '1234', 400, 50, STATE_IDLE | STATE_LOADED)
+        # drone = Drone(DRONE_MODEL_LIGHT, '1234', 400, 50, STATE_IDLE | STATE_LOADED)
+        drone = Drone(model=DRONE_MODEL_LIGHT, serial='1234',
+                      max_weight=400, battery=50, state=STATE_IDLE | STATE_LOADED,
+                      total_weight=0, meds=[])
+
         drone_id = DroneController.register(drone)
 
         with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
@@ -46,26 +50,54 @@ class TestDrone:
             DroneController.register(drone_1)
 
     def test_load_the_drone(self, drone):
-
         drone_id = DroneController.register(drone)
 
         med = Medication("C Vitamin", 500, 'VC', base64.b64encode("example".encode()))
         DroneController.load_drone(drone, med)
 
         # Get the drone from the db and check is correctly loaded.
-        with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
-            d = drones.find_one({'_id': drone_id})
-            d.pop('_id')
-            d.update(
-                {'meds': [Medication(**m) for m in d['meds']]}
-            )
+        loaded_drone = DroneController.get_drone(drone.serial)
 
-            loaded_drone = Drone(**d)
-
-            assert loaded_drone.meds
-            assert loaded_drone.total_weight() == 500
-            assert loaded_drone.meds[0].name == "C Vitamin"
+        assert loaded_drone.meds
+        assert loaded_drone.total_weight == 500
+        assert loaded_drone.meds[0].name == "C Vitamin"
 
         # Trying to add more to this same drone should fail.
         with pytest.raises(DroneOverweight):
             DroneController.load_drone(loaded_drone, med)
+
+    def test_check_for_loading(self, drone):
+
+        # Some random meds.
+        med_0 = Medication("Some med", 500, "code", base64.b64encode("image".encode()))
+        med_1 = Medication("Some med", 200, "code", base64.b64encode("image".encode()))
+        # Some drones.
+        drone_0 = drone = Drone(DRONE_MODEL_LIGHT, '1234', 500, 50, STATE_IDLE)
+        drone_1 = drone = Drone(DRONE_MODEL_LIGHT, '6789', 400, 50, STATE_IDLE)
+        drone_2 = drone = Drone(DRONE_MODEL_LIGHT, 'aa334', 500, 50, STATE_IDLE)
+
+        DroneController.register(drone_0)
+        DroneController.register(drone_1)
+        DroneController.register(drone_2)
+
+        # Load the the first drone with the max capacity.
+        DroneController.load_drone(drone_0, med_0)
+
+        # Ask for drones available for load.
+        result = DroneController.drones_for_loading()
+
+        # Should return drones 1 and 2
+        assert drone_1.serial == result[0][0]
+        assert drone_2.serial == result[1][0]
+
+        result = DroneController.drones_for_loading(med_1)
+
+        # Still should return the drones 1 and 2
+        assert drone_1.serial == result[0][0]
+        assert drone_2.serial == result[1][0]
+
+        result = DroneController.drones_for_loading(med_0)
+
+        # Only drone_2 has capacity for med_0
+        assert len(result) == 1
+        assert drone_2.serial == result[0][0]
