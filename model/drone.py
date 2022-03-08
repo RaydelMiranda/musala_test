@@ -4,7 +4,7 @@ structure for this.
 """
 import logging
 import os
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 
 from bson import ObjectId
 
@@ -24,12 +24,12 @@ from my point of view a drone can and will have
 more than one state often. For instance a drone should will be loaded while
 delivering if not, the drone has gone without being loaded.
 """
-STATE_IDLE = 0
-STATE_LOADING = 1
-STATE_LOADED = 2
-STATE_DELIVERING = 4
-STATE_DELIVERED = 8
-STATE_RETURNING = 16
+STATE_IDLE = 1
+STATE_LOADING = 2
+STATE_LOADED = 4
+STATE_DELIVERING = 8
+STATE_DELIVERED = 16
+STATE_RETURNING = 32
 
 
 @dataclass
@@ -39,6 +39,10 @@ class Drone:
     weight: int
     battery: int = 0
     state: int = STATE_IDLE
+    _id: any = field(init=False)
+
+    def __post_init__(self):
+        self._id = self.serial
 
 
 class DroneController:
