@@ -4,6 +4,7 @@ import pymongo
 import pytest
 
 from app import create_app
+from model.db import add_validations
 
 
 @pytest.fixture(autouse=True, scope='function')
@@ -12,6 +13,11 @@ def env_setup(monkeypatch):
     Fixture that set ups the test environment.
     """
     monkeypatch.setenv('DB_NAME', 'musala_test')
+
+
+@pytest.fixture(scope='function', autouse=True)
+def add_db_validations(env_setup):
+    add_validations()
 
 
 @pytest.fixture(autouse=True, scope='function')

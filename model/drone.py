@@ -9,6 +9,7 @@ from functools import reduce
 from typing import List
 
 from bson import ObjectId
+from pymongo.errors import WriteError
 
 from logger_helper.drone_logger import musala_logger
 from model.db import db_connection, DRONES_COLLECTION_NAME
@@ -124,8 +125,10 @@ class DroneController:
                     },
                     True
                 )
-            except Exception as err:
+            except WriteError as err:
                 musala_logger.error(err)
+                if err.code == 121:
+                    raise ValueError("Document validation failed")
 
             drone.meds.append(med)
 

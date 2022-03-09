@@ -57,6 +57,8 @@ class DroneLoader(Resource):
             return {'err': str(err), 'total_weight': total_weight}, 409
         except LowBatteryError as err:
             return {'err': str(err)}, 409
+        except ValueError as err:
+            return {'err': str(err)}, 406
         else:
             return {'updated_current_weight': total_weight}, 200
 

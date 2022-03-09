@@ -51,7 +51,7 @@ class TestDrone:
     def test_load_the_drone(self, drone):
         drone_id = DroneController.register(drone)
 
-        med = Medication("C Vitamin", 500, 'VC', base64.b64encode("example".encode()))
+        med = Medication("C_Vitamin", 500, 'VC', base64.b64encode("example".encode()))
         DroneController.load_drone(drone, med)
 
         # Get the drone from the db and check is correctly loaded.
@@ -59,7 +59,7 @@ class TestDrone:
 
         assert loaded_drone.meds
         assert loaded_drone.total_weight == 500
-        assert loaded_drone.meds[0].name == "C Vitamin"
+        assert loaded_drone.meds[0].name == "C_Vitamin"
 
         # Trying to add more to this same drone should fail.
         with pytest.raises(DroneOverweight):
@@ -68,8 +68,8 @@ class TestDrone:
     def test_check_for_loading(self, drone):
 
         # Some random meds.
-        med_0 = Medication("Some med", 500, "code", base64.b64encode("image".encode()))
-        med_1 = Medication("Some med", 200, "code", base64.b64encode("image".encode()))
+        med_0 = Medication("Some_Med-09", 500, "COD_E01", base64.b64encode("image".encode()))
+        med_1 = Medication("Some_Med_00", 200, "CODE", base64.b64encode("image".encode()))
         # Some drones.
         drone_0 = drone = Drone(DRONE_MODEL_LIGHT, '1234', 500, 50, STATE_IDLE)
         drone_1 = drone = Drone(DRONE_MODEL_LIGHT, '6789', 400, 50, STATE_IDLE)

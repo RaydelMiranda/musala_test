@@ -42,6 +42,22 @@ drone_validation = {
                 'minimum': 0,
                 'maximum': 100,
                 'description': "Battery percentage"
+            },
+            'meds': {
+                'bsonType': 'array',
+                'items': {
+                    "bsonType": 'object',
+                    'properties': {
+                        'name': {
+                            'bsonType': 'string',
+                            'pattern': "^[0-9A-Za-z_\\-]+$"
+                        },
+                        'code': {
+                            'bsonType': 'string',
+                            'pattern': "^[0-9A-Z_]+$"
+                        }
+                    }
+                }
             }
         }
     }

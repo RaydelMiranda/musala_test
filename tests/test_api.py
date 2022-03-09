@@ -31,7 +31,7 @@ class TestApi:
 
     def test_load_drone(self, client, drone):
         data = [{
-            'name': "C Vitamin",
+            'name': "C_Vitamin",
             'weight': 500,
             'code': 'VC',
             'image': str(base64.b64encode("example".encode()))
@@ -44,7 +44,7 @@ class TestApi:
     def test_drone_availability(self, client, drone):
 
         data = {
-                'name': "C Vitamin",
+                'name': "C_Vitamin",
                 'weight': 500,
                 'code': 'VC',
                 'image': str(base64.b64encode("example".encode()))
