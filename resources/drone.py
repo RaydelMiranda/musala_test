@@ -57,3 +57,15 @@ class DroneLoader(Resource):
             return {'err': str(err), 'total_weight': total_weight}, 409
         else:
             return {'updated_current_weight': total_weight}, 200
+
+
+class DronesAvailableForLoad(Resource):
+
+    def get(self):
+        data = request.json
+        med = None
+        if data:
+            med = Medication(**data)
+        result = DroneController.drones_for_loading(med)
+
+        return {'data': result}, 200

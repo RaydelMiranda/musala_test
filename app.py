@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restful import Resource, Api
 
-from resources.drone import Drone, SingleDrone, DroneLoader
+from resources.drone import Drone, SingleDrone, DroneLoader, DronesAvailableForLoad
 
 
 def create_app():
@@ -11,6 +11,7 @@ def create_app():
     api.add_resource(Drone, '/drones/')
     api.add_resource(SingleDrone, '/drone/<serial>/')
     api.add_resource(DroneLoader, '/drone/load/<serial>/')
+    api.add_resource(DronesAvailableForLoad, '/drone/available/')
 
     return app
 

@@ -40,3 +40,17 @@ class TestApi:
         response = client.post(f'/drone/load/{drone.serial}/', json=data)
 
         assert response.status_code == 200
+
+    def test_drone_availability(self, client, drone):
+
+        data = {
+                'name': "C Vitamin",
+                'weight': 500,
+                'code': 'VC',
+                'image': str(base64.b64encode("example".encode()))
+            }
+
+        DroneController.register(drone)
+        response = client.get('/drone/available/', json=data)
+
+        assert response.status_code == 200
