@@ -1,6 +1,6 @@
 from dataclasses import asdict
 
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource
 
 from model.drone import DroneController, Drone as DroneModel, DroneNotFound, DroneOverweight, LowBatteryError
