@@ -100,3 +100,11 @@ class TestDrone:
         # Only drone_2 has capacity for med_0
         assert len(result) == 1
         assert drone_2.serial == result[0][0]
+
+    def test_battery_threshold(self, drone):
+        drone.battery = 24
+        med = Medication("C Vitamin", 500, 'VC', base64.b64encode("example".encode()))
+
+        # Should except since battery is lower thant BATTERY_LOADING_THRESHOLD (25).
+        with pytest.raises(LowBatteryError):
+            DroneController.load_drone(drone, med)

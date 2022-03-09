@@ -3,7 +3,7 @@ from dataclasses import asdict
 from flask import request, jsonify
 from flask_restful import Resource
 
-from model.drone import DroneController, Drone as DroneModel, DroneNotFound, DroneOverweight
+from model.drone import DroneController, Drone as DroneModel, DroneNotFound, DroneOverweight, LowBatteryError
 from model.meds import Medication
 
 
@@ -55,6 +55,8 @@ class DroneLoader(Resource):
                 total_weight += DroneController.load_drone(drone, med)
         except DroneOverweight as err:
             return {'err': str(err), 'total_weight': total_weight}, 409
+        except LowBatteryError as err:
+            return {'err': str(err)}, 409
         else:
             return {'updated_current_weight': total_weight}, 200
 

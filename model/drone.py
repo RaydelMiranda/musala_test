@@ -35,6 +35,8 @@ STATE_DELIVERED = 16
 STATE_RETURNING = 32
 
 
+BATTERY_LOADING_THRESHOLD = 25
+
 class DroneError(Exception):
     pass
 
@@ -46,6 +48,8 @@ class DroneNotFound(DroneError):
 class DroneOverweight(DroneError):
     pass
 
+class LowBatteryError(DroneError):
+    pass
 
 @dataclass
 class Drone:
@@ -99,6 +103,12 @@ class DroneController:
         raise DroneOverweight exception if weight limit is violated.
         """
 
+        if drone.battery < BATTERY_LOADING_THRESHOLD:
+            raise LowBatteryError(f"Drone is not allowed to be loaded "
+                                  f"if battery is lower than: {BATTERY_LOADING_THRESHOLD}%")
+
+        DroneController.set_state(drone, STATE_LOADING)
+
         if drone.total_weight + med.weight > drone.max_weight:
             raise DroneOverweight(f"Maximum wight exceeded, could not add {med.name} with weight: {med.weight}.")
 
@@ -118,6 +128,9 @@ class DroneController:
                 musala_logger.error(err)
 
             drone.meds.append(med)
+
+        DroneController.set_state(drone, STATE_IDLE | STATE_LOADED)
+
         return drone.total_weight
 
     @staticmethod
@@ -160,3 +173,8 @@ class DroneController:
     def get_drone_list():
         with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
             return [drone for drone in drones.find({})]
+
+    @staticmethod
+    def set_state(drone: Drone, state: int):
+        with db_connection(os.environ['DB_NAME'], DRONES_COLLECTION_NAME) as drones:
+            drones.update_one({'serial': drone.serial}, {"$set": {'state': state}})
